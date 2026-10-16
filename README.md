@@ -1,17 +1,40 @@
-# SAP BTP Weather Microservice POC ☁️
+# SAP BTP Weather Microservice POC
 
-A Spring Boot 3 microservice deployed on **AWS Elastic Beanstalk** and integrated with **SAP BTP Connectivity Service** — demonstrating a hybrid cloud integration pattern.
+![Java](https://img.shields.io/badge/Java_17-ED8B00?style=flat&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot_3-6DB33F?style=flat&logo=springboot&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS_Elastic_Beanstalk-FF9900?style=flat&logo=amazonaws&logoColor=white)
+![SAP BTP](https://img.shields.io/badge/SAP_BTP-0070F2?style=flat&logo=sap&logoColor=white)
+![Maven](https://img.shields.io/badge/Maven-C71A36?style=flat&logo=apachemaven&logoColor=white)
 
-## What this demonstrates
+A Spring Boot 3 REST API deployed on **AWS Elastic Beanstalk** and registered as an HTTP Destination in **SAP BTP Connectivity Service** — demonstrating a production-ready hybrid cloud integration pattern.
+
+---
+
+## Architecture
+
+```
+SAP BTP Cockpit
+  └── Connectivity Service
+        └── Destination: WeatherService (HTTP, NoAuthentication)
+              └──► AWS Elastic Beanstalk (eu-central-1, Frankfurt)
+                      └── Spring Boot 3 App (Java 17, port 5000)
+                              └──► OpenWeatherMap API
+```
+
+---
+
+## What This Demonstrates
 
 | Concept | Implementation |
 |---|---|
-| **Hybrid AWS / SAP BTP integration** | App runs on AWS, registered as HTTP Destination in BTP Cockpit |
-| **SAP BTP Destination Service** | `WeatherService` destination — NoAuthentication, connection verified |
-| **Spring Boot 3 REST API** | Clean controller / service / model layers |
+| **Hybrid AWS / SAP BTP integration** | App runs on AWS, registered as HTTP Destination in BTP Cockpit — connection verified via "Check Connection" |
+| **SAP BTP Destination Service** | `WeatherService` destination, NoAuthentication, reusable across BTP services |
+| **Spring Boot 3 REST API** | Clean layered architecture: Controller → Service → Model |
 | **External API consumption** | OpenWeatherMap API, API key injected via environment variable |
-| **AWS Elastic Beanstalk** | Java 17 (Corretto), eu-central-1 (Frankfurt), nginx reverse proxy |
-| **Security best practice** | No secrets hardcoded — `WEATHER_API_KEY` as env var |
+| **AWS Elastic Beanstalk** | Java 17 (Corretto), Amazon Linux 2023, nginx reverse proxy |
+| **Security best practice** | Zero secrets in code — `WEATHER_API_KEY` passed as env var only |
+
+---
 
 ## Live Demo
 
@@ -20,7 +43,7 @@ GET http://btp-weather-poc-env.eba-cprtkiuw.eu-central-1.elasticbeanstalk.com/ap
 GET http://btp-weather-poc-env.eba-cprtkiuw.eu-central-1.elasticbeanstalk.com/api/weather?city=Frankfurt
 ```
 
-Example response:
+**Example response:**
 ```json
 {
   "city": "Frankfurt am Main",
@@ -31,62 +54,78 @@ Example response:
   "feelsLikeCelsius": 15.36,
   "humidityPercent": 77,
   "windSpeedMs": 1.28,
-  "source": "OpenWeatherMap API via SAP BTP Cloud Foundry",
+  "source": "OpenWeatherMap API via AWS Elastic Beanstalk",
   "fetchedBy": "api-user"
 }
 ```
+
+---
 
 ## Endpoints
 
 | Method | Path | Auth | Description |
 |---|---|---|---|
-| GET | `/api/weather/public` | None | App info (public) |
-| GET | `/api/weather?city={city}` | None | Current weather for any city |
-| GET | `/actuator/health` | None | Health check |
+| `GET` | `/api/weather/public` | None | App info — public health check |
+| `GET` | `/api/weather?city={city}` | None | Live weather for any city |
+| `GET` | `/actuator/health` | None | Spring Boot actuator health |
 
-## Architecture
-
-```
-SAP BTP Cockpit
-  └── Connectivity Service
-        └── Destination: WeatherService (HTTP, NoAuthentication)
-              └──► AWS Elastic Beanstalk (eu-central-1)
-                      └── Spring Boot 3 App (Java 17, port 5000)
-                              └──► OpenWeatherMap API
-```
+---
 
 ## Tech Stack
 
 - **Java 17** · **Spring Boot 3.2.5** · **Maven**
-- **AWS Elastic Beanstalk** (Corretto 17, Amazon Linux 2023)
+- **AWS Elastic Beanstalk** (Corretto 17, Amazon Linux 2023, eu-central-1)
 - **SAP BTP Connectivity Service** — Destination configuration
 - **OpenWeatherMap API**
+
+---
 
 ## Run Locally
 
 ```bash
-# Clone and build
+# 1. Clone
 git clone https://github.com/Marwan11500/btp-weather-poc.git
 cd btp-weather-poc
+
+# 2. Build
 mvn clean package -DskipTests
 
-# Run with your own API key
+# 3. Run (supply your own API key)
 WEATHER_API_KEY=your_key java -jar target/btp-weather-poc-1.0.0.jar
 ```
 
-Then open: `http://localhost:5000/api/weather?city=Berlin`
+Open: `http://localhost:5000/api/weather?city=Berlin`
+
+---
 
 ## Deploy to AWS Elastic Beanstalk
 
-See [DEPLOY.md](DEPLOY.md) for the full step-by-step guide.
+1. Build the JAR: `mvn clean package -DskipTests`
+2. Go to AWS Console → Elastic Beanstalk → Create Application
+3. Platform: **Java / Corretto 17**
+4. Upload `target/btp-weather-poc-1.0.0.jar`
+5. Add environment variable: `WEATHER_API_KEY=<your key>`
+6. Create environment — app starts on port 5000 (nginx proxy default)
 
-```bash
-mvn clean package -DskipTests
-# Upload target/btp-weather-poc-1.0.0.jar via AWS Console
-# Set env var: WEATHER_API_KEY=<your key>
-```
+---
+
+## SAP BTP Integration
+
+1. Open SAP BTP Cockpit → your subaccount
+2. **Connectivity → Destinations → New Destination**
+3. Configure:
+   - Name: `WeatherService`
+   - Type: `HTTP`
+   - URL: `http://<your-beanstalk-domain>`
+   - Authentication: `NoAuthentication`
+4. Click **Check Connection** — should return `200 OK`
+
+---
 
 ## Author
 
-**Marwan Soltan** — SAP BTP Administrator (C_ADBTP) · AWS SAA-C03 · Spring Boot Developer  
-[LinkedIn](https://linkedin.com/in/marwan-soltan) | [GitHub](https://github.com/Marwan11500)
+**Marwan Soltan**  
+SAP BTP Administrator (C_ADBTP) · AWS Solutions Architect Associate (SAA-C03) · Spring Boot Developer
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-0A66C2?style=flat&logo=linkedin&logoColor=white)](https://linkedin.com/in/marwan-soltan)
+[![GitHub](https://img.shields.io/badge/GitHub-181717?style=flat&logo=github&logoColor=white)](https://github.com/Marwan11500)
