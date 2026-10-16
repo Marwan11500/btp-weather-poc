@@ -1,0 +1,48 @@
+{
+  "xsappname": "btp-weather-poc",
+  "tenant-mode": "dedicated",
+  "description": "BTP Weather POC - XSUAA Security Descriptor",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Weather.Read",
+      "description": "Read weather data"
+    },
+    {
+      "name": "$XSAPPNAME.Weather.Admin",
+      "description": "Access admin endpoints and statistics"
+    }
+  ],
+  "role-templates": [
+    {
+      "name": "Weather-Reader",
+      "description": "Can read weather data",
+      "scope-references": [
+        "$XSAPPNAME.Weather.Read"
+      ]
+    },
+    {
+      "name": "Weather-Admin",
+      "description": "Full access including admin endpoints",
+      "scope-references": [
+        "$XSAPPNAME.Weather.Read",
+        "$XSAPPNAME.Weather.Admin"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "Weather-Reader-RC",
+      "description": "Assign to users who need to read weather data",
+      "role-template-references": [
+        "$XSAPPNAME.Weather-Reader"
+      ]
+    },
+    {
+      "name": "Weather-Admin-RC",
+      "description": "Assign to administrators",
+      "role-template-references": [
+        "$XSAPPNAME.Weather-Admin"
+      ]
+    }
+  ]
+}

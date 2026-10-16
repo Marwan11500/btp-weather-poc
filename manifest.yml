@@ -1,0 +1,15 @@
+---
+applications:
+  - name: btp-weather-poc
+    memory: 512M
+    disk_quota: 512M
+    instances: 1
+    random-route: true
+    buildpacks:
+      - java_buildpack
+    path: target/btp-weather-poc-1.0.0.jar
+    env:
+      JBP_CONFIG_COMPONENTS: "jres: ['JavaBuildpack::Jre::OpenJdkJre']"
+      JBP_CONFIG_OPEN_JDK_JRE: "{ jre: { version: 17.+ } }"
+      SPRING_PROFILES_ACTIVE: cloud
+      WEATHER_API_KEY: your-api-key-here

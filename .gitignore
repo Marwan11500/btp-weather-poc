@@ -1,0 +1,13 @@
+target/
+*.class
+*.jar
+*.war
+.idea/
+*.iml
+.DS_Store
+application-local.yml
+application-local.yaml
+
+# Never commit secrets
+*.env
+.env
